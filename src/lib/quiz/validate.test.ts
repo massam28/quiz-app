@@ -10,22 +10,23 @@ const good = {
   explanation: "해설",
 };
 
-function parse(data: unknown) {
-  return parseQuizFile(JSON.stringify(data));
-}
-
-function errorsOf(data: unknown) {
-  const result = parse(data);
+// 제목이 있는 문제지로 감싸서 검사합니다.
+function errorsOf(questions: unknown) {
+  const result = parseQuizFile(JSON.stringify({ title: "제목", questions }));
   if (result.ok) throw new Error("오류가 나와야 합니다");
   return result.errors;
 }
 
 describe("parseQuizFile", () => {
-  it("예시 파일 sample-questions.json의 10문항을 그대로 읽는다", () => {
-    const text = readFileSync(join(process.cwd(), "sample-questions.json"), "utf8");
+  it("question-papers/sample-questions.json의 제목과 10문항을 그대로 읽는다", () => {
+    const text = readFileSync(
+      join(process.cwd(), "question-papers", "sample-questions.json"),
+      "utf8",
+    );
     const result = parseQuizFile(text);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
+    expect(result.quiz.title).toBe("중학교 정보과목");
     expect(result.quiz.questions).toHaveLength(10);
     expect(result.quiz.questions.map((q) => q.correctAnswer)).toEqual([
       4, 2, 1, 3, 1, 3, 2, 4, 3, 1,
@@ -34,7 +35,7 @@ describe("parseQuizFile", () => {
   });
 
   it("파일 앞의 BOM 문자를 무시한다", () => {
-    const result = parseQuizFile("﻿" + JSON.stringify({ questions: [good] }));
+    const result = parseQuizFile("﻿" + JSON.stringify({ title: "제목", questions: [good] }));
     expect(result.ok).toBe(true);
   });
 
@@ -45,23 +46,31 @@ describe("parseQuizFile", () => {
     expect(result.errors[0]).toContain("파일 내용을 읽을 수 없습니다");
   });
 
+  it("제목(title)이 없거나 비어 있으면 받지 않는다", () => {
+    for (const data of [{ questions: [good] }, { title: " ", questions: [good] }]) {
+      const result = parseQuizFile(JSON.stringify(data));
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.errors).toEqual(["문제지 제목(title)이 비어 있습니다."]);
+    }
+  });
+
   it("questions가 없거나 비어 있으면 받지 않는다", () => {
-    expect(errorsOf({})).toEqual(["파일에 문제 목록(questions)이 없습니다."]);
-    expect(errorsOf([good])).toEqual(["파일에 문제 목록(questions)이 없습니다."]);
-    expect(errorsOf({ questions: [] })).toEqual([
-      "문제 목록(questions)에 문제가 하나도 없습니다.",
-    ]);
+    expect(errorsOf(undefined)).toEqual(["파일에 문제 목록(questions)이 없습니다."]);
+    expect(errorsOf([])).toEqual(["문제 목록(questions)에 문제가 하나도 없습니다."]);
+    const arrayRoot = parseQuizFile(JSON.stringify([good]));
+    expect(arrayRoot.ok).toBe(false);
   });
 
   it("보기가 4개가 아니면 몇 번 문제인지 알려준다", () => {
-    expect(
-      errorsOf({ questions: [good, good, { ...good, options: ["가", "나", "다"] }] }),
-    ).toEqual(["3번 문제의 보기는 4개여야 합니다. (지금 3개)"]);
+    expect(errorsOf([good, good, { ...good, options: ["가", "나", "다"] }])).toEqual([
+      "3번 문제의 보기는 4개여야 합니다. (지금 3개)",
+    ]);
   });
 
   it("정답 번호가 1~4 정수가 아니면 받지 않는다", () => {
     for (const bad of [0, 5, 2.5, "2", null]) {
-      expect(errorsOf({ questions: [{ ...good, correctAnswer: bad }] })).toEqual([
+      expect(errorsOf([{ ...good, correctAnswer: bad }])).toEqual([
         "1번 문제의 정답 번호(correctAnswer)는 1~4 중 하나의 숫자여야 합니다.",
       ]);
     }
@@ -69,9 +78,7 @@ describe("parseQuizFile", () => {
 
   it("빈 문제·보기·해설을 모두 찾아 알려준다", () => {
     expect(
-      errorsOf({
-        questions: [good, { question: " ", options: ["가", "", "다", "라"], correctAnswer: 1 }],
-      }),
+      errorsOf([good, { question: " ", options: ["가", "", "다", "라"], correctAnswer: 1 }]),
     ).toEqual([
       "2번 문제의 문제 내용(question)이 비어 있습니다.",
       "2번 문제의 2번 보기가 비어 있습니다.",
@@ -80,6 +87,6 @@ describe("parseQuizFile", () => {
   });
 
   it("문항이 객체가 아니면 받지 않는다", () => {
-    expect(errorsOf({ questions: ["문제"] })).toEqual(["1번 문제의 형식이 올바르지 않습니다."]);
+    expect(errorsOf(["문제"])).toEqual(["1번 문제의 형식이 올바르지 않습니다."]);
   });
 });

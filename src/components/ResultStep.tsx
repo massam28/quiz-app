@@ -4,7 +4,7 @@ import { formatScore } from "@/lib/quiz/score";
 type Props = {
   grade: GradeResult;
   onRetry: () => void;
-  onChangeFile: () => void;
+  onChangePaper: () => void;
 };
 
 function optionText(options: string[], choice: number | null) {
@@ -12,7 +12,7 @@ function optionText(options: string[], choice: number | null) {
 }
 
 // 최종 결과: 총점, 문항별 정오·내가 고른 답·정답·해설
-export default function ResultStep({ grade, onRetry, onChangeFile }: Props) {
+export default function ResultStep({ grade, onRetry, onChangePaper }: Props) {
   return (
     <section className="flex flex-col gap-6">
       <div className="flex flex-col items-center gap-1 rounded-2xl bg-blue-600 p-6 text-white">
@@ -72,10 +72,10 @@ export default function ResultStep({ grade, onRetry, onChangeFile }: Props) {
         </button>
         <button
           type="button"
-          onClick={onChangeFile}
+          onClick={onChangePaper}
           className="min-h-14 flex-1 rounded-xl border border-slate-300 bg-white px-6 text-lg font-semibold text-slate-700 hover:bg-slate-100"
         >
-          다른 파일 올리기
+          다른 문제지 고르기
         </button>
       </div>
     </section>

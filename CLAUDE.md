@@ -6,13 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - 교육용 **문제풀이 웹앱**입니다. 요구사항의 기준은 `PRD.md`입니다. 작업 전에 항상 `PRD.md`를 먼저 읽습니다.
 - 기술 구성: Next.js + TypeScript, Vercel 배포, PC·휴대폰 겸용 화면
-- 이용 흐름: 문제 파일(JSON) 업로드 → 문항 확인 → 한 문제씩 풀이 → 모두 답한 뒤 제출 → 점수·문항별 정오·해설 확인
+- 이용 흐름(현재 버전): 홈에서 `question-papers` 폴더의 문제지 목록 → 문제지 선택 → 문항 확인 → 한 문제씩 풀이 → 모두 답한 뒤 제출 → 점수·문항별 정오·해설 확인
+- 초기 버전(커밋 `1083233`)은 학생이 JSON 파일을 직접 업로드하는 방식이었습니다. 지금은 쓰지 않으며, 학생에게 업로드를 요구하지 않습니다.
 
 ## 폴더 구성 (2026-11-02 기준)
 
 - 이 폴더(`G:\내 드라이브\0. 2026년\21. claude`)는 Google Drive 동기화 폴더입니다. **요구사항 문서만 보관**하고 앱 코드는 만들지 않습니다.
 - 앱 개발 폴더는 `C:\dev\quiz-app`입니다. 1일차 앱 코드가 여기에 있습니다.
-- `PRD.md`, `CLAUDE.md`, `sample-questions.json`이 두 곳에 있으므로, 한쪽을 고치면 두 파일 내용이 같은지 확인하고 다르면 사용자에게 알립니다.
+- `PRD.md`, `CLAUDE.md`, `question-papers/sample-questions.json`이 두 곳에 있으므로, 한쪽을 고치면 두 파일 내용이 같은지 확인하고 다르면 사용자에게 알립니다.
 - Next.js 16.4.3을 사용합니다. 학습 데이터와 다른 부분이 있으므로 코드를 쓰기 전에 `AGENTS.md`의 안내대로 `node_modules/next/dist/docs/`의 문서를 확인합니다.
 
 ## 명령 (`C:\dev\quiz-app`에서 실행, 2026-11-02 확인)
@@ -27,30 +28,37 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 앱 구조
 
+- `question-papers/*.json`: 문제지 파일. 최상위 `title`(목록에 표시)과 `questions`
 - `src/lib/quiz/`: 화면과 상관없는 규칙
-  - `validate.ts`: 파일 검사. 문항별 한국어 오류 목록을 만들고, 하나라도 있으면 파일 전체를 거부합니다.
+  - `papers.ts`: `question-papers` 폴더를 파일 이름 순서로 읽습니다. 서버 화면(`page.tsx`)에서만 쓰며, 제작 때 읽어 화면에 포함됩니다. 그래서 문제지를 추가하면 다시 제작(배포)해야 합니다.
+    - 경로는 `path.join(process.cwd(), "question-papers", ...)` 형태로 고정합니다. 경로를 변수로 넘기면 제작 시 "프로젝트 전체가 배포에 포함된다"는 경고가 납니다.
+  - `validate.ts`: 문제지 검사. 제목과 문항별 한국어 오류 목록을 만들고, 하나라도 있으면 그 문제지는 풀 수 없게 합니다.
   - `score.ts`: 채점. 소수 첫째 자리 반올림은 정수 계산으로 처리합니다.
-  - `types.ts`: 문항 형식
-- `src/components/QuizApp.tsx`: 화면 단계(upload → review → solving → result)를 관리하는 유일한 상태 보관 장소. 서버 전송·저장소·localStorage는 쓰지 않습니다.
-- `UploadStep` / `ReviewStep` / `QuestionStep` / `ResultStep`: 단계별 화면
-- `src/app/page.tsx`는 `QuizApp`만 보여줍니다. 2일차 기능은 이 구조 위에 추가합니다.
+  - `types.ts`: 문항·문제지 형식
+- `src/app/page.tsx`: 서버에서 문제지를 읽어 `QuizApp`에 넘깁니다.
+- `src/components/QuizApp.tsx`: 화면 단계(list → review → solving → result)를 관리하는 유일한 상태 보관 장소. 저장소·localStorage는 쓰지 않습니다.
+- `PaperListStep` / `ReviewStep` / `QuestionStep` / `ResultStep`: 단계별 화면. 2일차 기능은 이 구조 위에 추가합니다.
 
 ## 개발 범위 (1일차 / 2일차)
 
-- **1일차**: JSON 업로드, 문항 표시, 4지선다 풀이, 제출 후 채점·점수·정오·해설, 로컬 실행, Vercel 배포
+- **1일차**: `question-papers` 문제지 목록·선택, 문항 표시, 4지선다 풀이, 제출 후 채점·점수·정오·해설, 로컬 실행, Vercel 배포
 - **2일차**: 교사 Google 로그인·학생 게스트 입장, Azure AI 문제 생성, 문제 저장·공개, Firestore 결과 저장, 교사용 성적 조회
 - 1일차에는 로그인·AI·DB를 **구현하지 않습니다.** 나중에 확장하기 쉬운 구조로 만들되, 2일차 기능을 미리 만들지 않습니다.
 
 ## 반드시 지킬 앱 규칙 (PRD.md 결정 사항 요약)
 
-- 문제 파일: 최상위 `questions` 배열, 각 문항은 `question`, `options`(4개), `correctAnswer`(1~4, 1이 첫 번째 보기), `explanation`
-- 잘못된 파일은 **전체를 받지 않고**, 몇 번 문항의 어떤 항목이 틀렸는지 쉬운 한국어로 안내합니다.
+- 문제지 파일: `question-papers` 폴더, 최상위 `title`(questions 앞)과 `questions` 배열, 각 문항은 `question`, `options`(4개), `correctAnswer`(1~4, 1이 첫 번째 보기), `explanation`
+- 홈 화면 목록에는 파일 이름이 아니라 각 파일의 `title`을 표시합니다. 제목을 코드에 고정하지 않습니다. 목록은 파일 이름 순서이고 문항 수를 함께 보여줍니다.
+- 학생에게 파일 업로드를 요구하지 않습니다.
+- 잘못된 문제지는 **풀 수 없게** 하고, 목록에 파일 이름과 함께 몇 번 문항의 어떤 항목이 틀렸는지 쉬운 한국어로 안내합니다.
+- 문제지를 고르면 문항 확인 화면(제목·총 문항 수·문제 목록, [풀이 시작]·[다른 문제지 고르기])을 거쳐 풀이를 시작합니다.
 - 풀이 중에는 정답 여부·점수·해설을 **절대 보여주지 않습니다.**
 - [이전]/[다음]으로 답을 바꿀 수 있고, 진행률(예: 3/10)을 표시하며, 모든 문항에 답해야 [제출]이 활성화됩니다.
 - 점수 = 정답 수 ÷ 전체 문항 수 × 100, 소수 첫째 자리까지 반올림합니다(예: 66.7점).
-- 결과 화면: 문항마다 내가 고른 답·정답·○/×·해설, 그리고 [다시 풀기]·[다른 파일 올리기] 버튼
+- 결과 화면: 문항마다 내가 고른 답·정답·○/×·해설, 그리고 [다시 풀기]·[다른 문제지 고르기] 버튼
 - 새로고침하면 진행 상황이 사라져도 됩니다(1일차). 문제·보기 순서는 섞지 않습니다.
-- 예시 문항을 앱에 고정하는 것으로 끝내지 않습니다. 이용자가 직접 업로드할 수 있어야 하며, 테스트용 `sample-questions.json`을 함께 만듭니다.
+- 원본 JSON 접근을 막거나 정답을 숨기는 보호 기능은 현재 범위가 아닙니다.
+- 확인을 위해 사용자 허락 없이 임의의 문제지나 문항을 `question-papers`에 추가하지 않습니다.
 - 앱 화면의 안내 문구와 오류 메시지는 일반인이 이해할 수 있는 쉬운 한국어로 씁니다.
 
 ## 작업 기준
@@ -90,6 +98,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 현재 상태 메모 (2026-11-02 확인)
 
 - 1일차 앱 제작과 내 컴퓨터에서 확인까지 마쳤습니다. 배포는 아직 하지 않았습니다.
+- 문제지 목록 방식(현재 버전)으로 바꾸고 내 컴퓨터에서 확인했습니다. 문제지가 1개뿐이라 "여러 문제지가 있을 때" 화면은 아직 확인하지 못했습니다.
 - 설치됨: Node.js v24.18.0, npm 11.16.0, Git 2.55.0
 - 설치 안 됨: GitHub CLI(`gh`), Vercel CLI(`vercel`)
 - Git 표시 이름·이메일: `massam28` / `arerama1211@gmail.com` (컴퓨터 전체 설정)

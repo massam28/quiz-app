@@ -54,7 +54,7 @@ function checkQuestion(item: unknown, no: number): string[] {
   return errors;
 }
 
-// 업로드한 파일 내용을 검사합니다. 하나라도 잘못되면 파일 전체를 받지 않습니다.
+// 문제지 파일 내용을 검사합니다. 하나라도 잘못되면 파일 전체를 받지 않습니다.
 export function parseQuizFile(text: string): ParseResult {
   let data: unknown;
   try {
@@ -69,25 +69,25 @@ export function parseQuizFile(text: string): ParseResult {
     };
   }
 
-  const questions =
+  const root =
     typeof data === "object" && data !== null && !Array.isArray(data)
-      ? (data as Record<string, unknown>).questions
-      : undefined;
+      ? (data as Record<string, unknown>)
+      : {};
+  const { title, questions } = root;
+
+  const errors: string[] = [];
+  if (!isFilledString(title)) {
+    errors.push("문제지 제목(title)이 비어 있습니다.");
+  }
 
   if (!Array.isArray(questions)) {
-    return {
-      ok: false,
-      errors: ["파일에 문제 목록(questions)이 없습니다."],
-    };
-  }
-  if (questions.length === 0) {
-    return {
-      ok: false,
-      errors: ["문제 목록(questions)에 문제가 하나도 없습니다."],
-    };
+    errors.push("파일에 문제 목록(questions)이 없습니다.");
+  } else if (questions.length === 0) {
+    errors.push("문제 목록(questions)에 문제가 하나도 없습니다.");
+  } else {
+    errors.push(...questions.flatMap((item, i) => checkQuestion(item, i + 1)));
   }
 
-  const errors = questions.flatMap((item, i) => checkQuestion(item, i + 1));
   if (errors.length > 0) {
     return { ok: false, errors };
   }
@@ -95,6 +95,7 @@ export function parseQuizFile(text: string): ParseResult {
   return {
     ok: true,
     quiz: {
+      title: title as string,
       questions: (questions as Question[]).map((q) => ({
         question: q.question,
         options: [...q.options],
