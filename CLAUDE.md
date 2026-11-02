@@ -92,6 +92,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 1일차 앱 제작과 내 컴퓨터에서 확인까지 마쳤습니다. 배포는 아직 하지 않았습니다.
 - 설치됨: Node.js v24.18.0, npm 11.16.0, Git 2.55.0
 - 설치 안 됨: GitHub CLI(`gh`), Vercel CLI(`vercel`)
-- Git 사용자 이름이 `본인 이름`, 이메일이 `test@example.com`으로 되어 있습니다. 예시 값이므로 배포 전에 실제 정보로 바꿔야 합니다.
-- `C:\dev\quiz-app`은 아직 Git 저장소가 아닙니다.
+- Git 표시 이름·이메일: `massam28` / `arerama1211@gmail.com` (컴퓨터 전체 설정)
+- `C:\dev\quiz-app`은 Git 저장소(`main` 브랜치)입니다. 첫 커밋 `1083233`에 1일차 앱을 기록했습니다.
+- 인터넷 저장소(GitHub)는 아직 연결하지 않았습니다. 업로드와 배포는 사용자가 따로 요청할 때만 합니다.
 - GitHub·Vercel 가입 여부는 아직 확인되지 않았습니다.
