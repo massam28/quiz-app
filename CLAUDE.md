@@ -105,5 +105,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 설치 안 됨: GitHub CLI(`gh`), Vercel CLI(`vercel`)
 - Git 표시 이름·이메일: `massam28` / `arerama1211@gmail.com` (컴퓨터 전체 설정)
 - `C:\dev\quiz-app`은 Git 저장소(`main` 브랜치)입니다. 첫 커밋 `1083233`에 1일차 앱을 기록했습니다.
-- 인터넷 저장소(GitHub)는 아직 연결하지 않았습니다. 업로드와 배포는 사용자가 따로 요청할 때만 합니다.
-- GitHub·Vercel 가입 여부는 아직 확인되지 않았습니다.
+- GitHub 저장소: https://github.com/massam28/quiz-app (공개, 원격 이름 `origin`, `main` 연결). 2026-11-02에 처음 올렸습니다.
+  - GitHub 로그인은 Windows에 저장된 massam28 로그인(Git Credential Manager)을 씁니다. GitHub CLI(`gh`)는 설치하지 않았습니다.
+  - 공개 저장소라 문제지 정답, 이 파일의 이메일·폴더 경로, 커밋 작성자 이메일이 누구에게나 보입니다.
+  - GitHub에 올리기(push)는 사용자가 요청할 때만 합니다.
+- Vercel: 가입 여부 미확인, 연결 안 함. 배포는 사용자가 따로 요청할 때만 합니다.
