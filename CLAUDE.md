@@ -98,7 +98,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 현재 상태 메모 (2026-11-02 확인)
 
 - 1일차 앱 제작과 내 컴퓨터에서 확인까지 마쳤습니다. 배포는 아직 하지 않았습니다.
-- 문제지 목록 방식(현재 버전)으로 바꾸고 내 컴퓨터에서 확인했습니다. 문제지가 1개뿐이라 "여러 문제지가 있을 때" 화면은 아직 확인하지 못했습니다.
+- 문제지 목록 방식(현재 버전)으로 바꾸고 내 컴퓨터에서 확인했습니다.
+- `question-papers`의 문제지: `high-school-questions.json`("고등학교 정보과목", 10문항), `sample-questions.json`("중학교 정보과목", 10문항). 두 문제지가 목록에 함께 표시되고 각각 끝까지 풀리는 것을 확인했습니다.
+- `high-school-questions.json`은 앱 폴더에만 있고 Google Drive 폴더에는 복사하지 않았습니다.
 - 설치됨: Node.js v24.18.0, npm 11.16.0, Git 2.55.0
 - 설치 안 됨: GitHub CLI(`gh`), Vercel CLI(`vercel`)
 - Git 표시 이름·이메일: `massam28` / `arerama1211@gmail.com` (컴퓨터 전체 설정)
