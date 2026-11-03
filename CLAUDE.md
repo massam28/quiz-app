@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 교육용 **문제풀이 웹앱**입니다. 요구사항의 기준은 `PRD.md`입니다. 작업 전에 항상 `PRD.md`를 먼저 읽습니다.
 - 기술 구성: Next.js + TypeScript, Vercel 배포, PC·휴대폰 겸용 화면
 - 이용 흐름(현재 버전, 2026-11-03): 첫 화면(`/`)에서 [교사로 시작하기]·[학생으로 시작하기] 선택
-  - 교사(`/teacher`): 기본 구조만 있음(문제 등록·학생 풀이 결과 칸, [첫 화면으로]). 로그인 없음
+  - 교사(`/teacher`): Firebase Google 로그인(허용 계정 1개) 후 기본 구조(문제 등록·학생 풀이 결과 칸, [로그아웃], [첫 화면으로])
   - 학생(`/student`): 이름 입력 → `question-papers` 폴더의 문제지 목록 → 문제지 선택 → 문항 확인 → 한 문제씩 풀이 → 모두 답한 뒤 제출 → 점수·문항별 정오·해설 확인
 - 초기 버전(커밋 `1083233`)은 학생이 JSON 파일을 직접 업로드하는 방식이었습니다. 지금은 쓰지 않으며, 학생에게 업로드를 요구하지 않습니다.
 
@@ -37,8 +37,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - `validate.ts`: 문제지 검사. 제목과 문항별 한국어 오류 목록을 만들고, 하나라도 있으면 그 문제지는 풀 수 없게 합니다.
   - `score.ts`: 채점. 소수 첫째 자리 반올림은 정수 계산으로 처리합니다.
   - `types.ts`: 문항·문제지 형식
-- `src/app/page.tsx`: 첫 화면(교사·학생 선택). 아직 로그인이 없어 누구나 두 화면에 들어갈 수 있습니다.
-- `src/app/teacher/page.tsx`: 교사 화면 기본 구조. 로그인·문제 등록·결과 조회는 다음 단계에서 연결합니다.
+- `src/app/page.tsx`: 첫 화면(교사·학생 선택).
+- `src/app/teacher/page.tsx` → `src/components/TeacherApp.tsx`: 교사 로그인 화면. Google 팝업 로그인 후 `/api/teacher/me`에 토큰을 보내, 서버가 허용 계정이라고 답할 때만 `TeacherDashboard`를 보여줍니다. 허용되지 않으면 안내 후 자동 로그아웃합니다.
+- `src/app/api/teacher/me/route.ts`: 교사 확인 서버 창구(200 허용 / 401 로그인 안 됨·토큰 오류 / 403 다른 계정 / 500 설정 없음).
+- `src/lib/auth/verifyTeacher.ts`(서버 전용): `firebase-admin`으로 토큰을 확인합니다. 프로젝트 ID만 쓰며 비밀키(서비스 계정)는 쓰지 않습니다. **앞으로 만들 교사 기능의 서버 코드는 먼저 `verifyTeacherRequest(request)`로 확인합니다.**
+- `src/lib/auth/teacher.ts`: 허용 이메일 비교(대소문자·공백 무시, Google이 확인한 이메일만)와 토큰 읽기 규칙. 점검 파일 `teacher.test.ts`
+- `src/lib/firebase/client.ts`: 브라우저용 Firebase 연결
+- 설정값은 `C:\dev\quiz-app\.env.local`(Git에 안 올라감): `NEXT_PUBLIC_FIREBASE_API_KEY`·`_AUTH_DOMAIN`·`_PROJECT_ID`·`_APP_ID`(공개 값, `firebase apps:sdkconfig WEB 1:791239491499:web:81b683aca6ba0968b15cee --project quiz-app-2qy8u`로 다시 받기)와 `TEACHER_EMAIL`(서버 전용). Vercel에 배포할 때는 같은 값을 Vercel 환경 변수에도 넣어야 합니다.
 - `src/app/student/page.tsx`: 서버에서 문제지를 읽어 `StudentApp`에 넘깁니다.
 - `src/components/StudentApp.tsx`: 이름 입력(`StudentNameStep`) 후 "○○○ 학생" 표시와 함께 `QuizApp`을 보여줍니다. 이름은 저장하지 않습니다. 학생 화면에는 교사 화면·결과표로 가는 버튼을 두지 않습니다.
 - `src/components/QuizApp.tsx`: 화면 단계(list → review → solving → result)를 관리하는 유일한 상태 보관 장소. 저장소·localStorage는 쓰지 않습니다.
@@ -48,7 +53,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **1일차**: `question-papers` 문제지 목록·선택, 문항 표시, 4지선다 풀이, 제출 후 채점·점수·정오·해설, 로컬 실행, Vercel 배포
 - **2일차**: 교사 Google 로그인·학생 게스트 입장, Azure AI 문제 생성, 문제 저장·공개, Firestore 결과 저장, 교사용 성적 조회
-- 2일차 진행(2026-11-03): 교사·학생 선택 첫 화면, 교사 화면 기본 구조, 학생 이름 입장까지 완료하고 내 컴퓨터에서 확인했습니다. Google 로그인·AI·Firestore는 아직 연결하지 않았습니다(배포 안 함).
+- 2일차 진행(2026-11-03): 교사·학생 선택 첫 화면, 교사 화면 기본 구조, 학생 이름 입장, 교사 Google 로그인(허용 계정 1개·서버 확인·로그아웃)까지 완료하고 내 컴퓨터에서 확인했습니다. AI·Firestore는 아직 연결하지 않았습니다(배포 안 함).
 - 1일차에는 로그인·AI·DB를 **구현하지 않습니다.** 나중에 확장하기 쉬운 구조로 만들되, 2일차 기능을 미리 만들지 않습니다.
 
 ## 반드시 지킬 앱 규칙 (PRD.md 결정 사항 요약)
@@ -126,4 +131,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Firebase (2026-11-03 확인): Firebase CLI 15.34.2(`npm i -g firebase-tools`, `C:\Users\마아람\AppData\Roaming\npm`). `firebase login`으로 `arerama1211@gmail.com` 로그인, `firebase projects:list`에 기존 프로젝트 4개가 보입니다(이번에 새로 만들지 않음).
   - 공식 플러그인 `firebase@firebase` 1.1.0(마켓플레이스 `firebase/agent-skills`)을 사용자 범위로 설치했습니다. Firebase 스킬 14개와 MCP(`npx -y firebase-tools@15.32.1 mcp --dir .`)가 함께 들어 있고, `claude mcp list`에서 Connected입니다.
   - 앱을 다시 시작한 새 대화에서 MCP 도구(`firebase_get_environment`)로 계정 조회는 아직 확인하지 않았습니다.
+  - 2026-11-03 이 앱용 프로젝트 `quiz-app-2qy8u`(이름 quiz-app, 무료 요금제)와 웹 앱을 사용자 요청으로 CLI(`projects:create`, `apps:create`)로 만들었습니다. Google 로그인은 임시 폴더의 `firebase.json`(`auth.providers.googleSignIn`)으로 `firebase deploy --only auth`해 켰습니다. 앱 폴더에는 `firebase.json`이 없습니다.
+  - CLI로 만든 프로젝트는 로그인 허용 도메인에 `localhost`가 **빠져 있어** 로그인 시 "unauthorized-domain"이 났습니다. Identity Toolkit 관리 API(`admin/v2/projects/quiz-app-2qy8u/config`, `authorizedDomains`)로 추가했습니다. Vercel 주소를 추가할 때도 같은 방법이나 Firebase 화면(Authentication → 설정 → 승인된 도메인)을 씁니다.
+  - 2026-11-03 사용자가 arerama1211@gmail.com으로 교사 로그인 성공, 새로고침 후 유지, 로그아웃을 확인했습니다. 다른 계정 차단은 실제 다른 계정으로는 아직 확인하지 않았습니다(서버 규칙 점검으로만 확인).
 - `claude` 명령은 PATH에 없고, Claude 앱에 들어 있는 `C:\Users\마아람\AppData\Local\Claude-Data\claude_pzs8sxrjxfjjc\claude-code\2.1.309\9078b9c1d466\claude.exe`를 썼습니다(앱 업데이트 시 경로가 바뀔 수 있음).
