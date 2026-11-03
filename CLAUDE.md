@@ -162,7 +162,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 2026-11-03 사용자 요청으로 서비스 계정 `firebase-adminsdk-fbsvc@quiz-app-2qy8u.iam.gserviceaccount.com`의 키(키 ID `720c82ca…`)를 IAM API로 만들어 `C:\Users\마아람\.firebase-keys\quiz-app-2qy8u-admin.json`에만 저장했습니다(내용 미출력). 이때 프로젝트의 IAM API(`iam.googleapis.com`)를 켰습니다.
   - 2026-11-03 확인용으로 예시 `sample-questions.json`("중학교 정보과목")을 등록했고(현재 비공개), 시험용 학생 결과 2건(김민수 100점, 이영희 70점)이 Firestore에 있습니다.
   - 2026-11-03 AI 출제 실제 확인: 사용자가 고른 `표준학습자료_정보보호와데이터활용-5.pdf`로 Azure 호출 1회 성공(8.6초) → "안전한 계정 관리와 데이터 활용 점검 문제" 저장·공개 → 학생 "박지원" 80점 제출 → 시험 후 비공개로 돌림. 사용자가 직접 등록한 "고등학교 정보과목 cpy"(공개 중)도 있습니다.
-  - 암호가 걸린 실제 PDF, 서버 쪽 512KiB 초과 거부(화면에서 먼저 막힘), 배포 주소 동작은 아직 미확인입니다(PRD.md "배포 주소에서 따로 시험할 항목").
+  - 암호가 걸린 실제 PDF, 서버 쪽 512KiB 초과 거부(화면에서 먼저 막힘)는 아직 미확인입니다.
+  - 2026-11-03 GitHub에 `1819a15`까지 push, Vercel 정식 배포 2회(첫 배포는 `firebase-admin/auth` 로딩 오류로 서버 창구 전부 500 → 수정 후 재배포). Vercel 환경 변수(Production): `NEXT_PUBLIC_FIREBASE_*` 4개, `TEACHER_EMAIL`, `AZURE_API_STYLE`·`AZURE_ENDPOINT`·`AZURE_DEPLOYMENT`(Claude가 CLI로 입력), `AZURE_API_KEY`·`FIREBASE_SERVICE_ACCOUNT_JSON`(사용자가 터미널 명령으로 직접 입력, Secret). Firebase 로그인 허용 도메인에 `quiz-app-navy-two-13.vercel.app` 추가. 배포 주소 확인 범위는 PRD.md "배포 주소에서 따로 시험할 항목" 표. 시험 결과 "배포시험"(100점) 1건이 Firestore에 있습니다.
+  - Vercel 로그 확인: `vercel logs --since 20m --json` (오류·경고·console 출력만 남고 정상 요청은 안 보일 수 있음)
   - CLI로 만든 프로젝트는 로그인 허용 도메인에 `localhost`가 **빠져 있어** 로그인 시 "unauthorized-domain"이 났습니다. Identity Toolkit 관리 API(`admin/v2/projects/quiz-app-2qy8u/config`, `authorizedDomains`)로 추가했습니다. Vercel 주소를 추가할 때도 같은 방법이나 Firebase 화면(Authentication → 설정 → 승인된 도메인)을 씁니다.
   - 2026-11-03 사용자가 arerama1211@gmail.com으로 교사 로그인 성공, 새로고침 후 유지, 로그아웃을 확인했습니다. 다른 계정 차단은 실제 다른 계정으로는 아직 확인하지 않았습니다(서버 규칙 점검으로만 확인).
 - `claude` 명령은 PATH에 없고, Claude 앱에 들어 있는 `C:\Users\마아람\AppData\Local\Claude-Data\claude_pzs8sxrjxfjjc\claude-code\2.1.309\9078b9c1d466\claude.exe`를 썼습니다(앱 업데이트 시 경로가 바뀔 수 있음).
