@@ -1,8 +1,8 @@
-import type { Question } from "@/lib/quiz/types";
+import type { StudentQuestion } from "@/lib/quiz/records";
 
 type Props = {
   title: string;
-  questions: Question[];
+  questions: StudentQuestion[];
   onStart: () => void;
   onChangePaper: () => void;
 };

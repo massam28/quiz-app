@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { normalizeStudentName, STUDENT_NAME_MAX } from "@/lib/quiz/records";
 
 type Props = {
   onEnter: (name: string) => void;
@@ -14,7 +15,7 @@ export default function StudentNameStep({ onEnter }: Props) {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const name = value.trim();
+    const name = normalizeStudentName(value);
     if (name === "") {
       setShowError(true);
       return;
@@ -45,6 +46,7 @@ export default function StudentNameStep({ onEnter }: Props) {
             setShowError(false);
           }}
           autoComplete="name"
+          maxLength={STUDENT_NAME_MAX}
           aria-invalid={showError}
           aria-describedby={showError ? "student-name-error" : undefined}
           className="min-h-14 rounded-xl border-2 border-slate-300 bg-white px-4 text-lg focus:border-blue-500 focus:outline-none"

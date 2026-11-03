@@ -1,20 +1,25 @@
-import type { Answers, Question } from "@/lib/quiz/types";
+import type { Answers } from "@/lib/quiz/types";
+import type { StudentQuestion } from "@/lib/quiz/records";
 import { unansweredNumbers } from "@/lib/quiz/score";
 
 type Props = {
-  questions: Question[];
+  questions: StudentQuestion[];
   answers: Answers;
   index: number;
+  submitting: boolean;
+  submitError?: string;
   onSelect: (choice: number) => void;
   onMove: (index: number) => void;
   onSubmit: () => void;
 };
 
-// 문제풀이: 한 화면에 한 문항. 정답 여부·점수·해설은 보여주지 않습니다.
+// 문제풀이: 한 화면에 한 문항. 정답 여부·점수·해설은 보여주지 않습니다(이 화면에는 정답이 없습니다).
 export default function QuestionStep({
   questions,
   answers,
   index,
+  submitting,
+  submitError,
   onSelect,
   onMove,
   onSubmit,
@@ -90,11 +95,17 @@ export default function QuestionStep({
         </p>
       )}
 
+      {submitError && (
+        <p role="alert" className="rounded-xl border border-red-300 bg-red-50 p-3 leading-relaxed text-red-900">
+          {submitError}
+        </p>
+      )}
+
       <div className="flex gap-3">
         <button
           type="button"
           onClick={() => onMove(index - 1)}
-          disabled={index === 0}
+          disabled={index === 0 || submitting}
           className="min-h-14 flex-1 rounded-xl border border-slate-300 bg-white px-4 text-lg font-semibold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
         >
           이전
@@ -103,10 +114,10 @@ export default function QuestionStep({
           <button
             type="button"
             onClick={onSubmit}
-            disabled={!canSubmit}
+            disabled={!canSubmit || submitting}
             className="min-h-14 flex-1 rounded-xl bg-blue-600 px-4 text-lg font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
           >
-            제출
+            {submitting ? "제출하는 중…" : submitError ? "다시 제출" : "제출"}
           </button>
         ) : (
           <button

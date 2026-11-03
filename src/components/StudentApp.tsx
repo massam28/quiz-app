@@ -2,17 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import type { QuestionPaper } from "@/lib/quiz/types";
 import QuizApp from "./QuizApp";
 import StudentNameStep from "./StudentNameStep";
 
-type Props = {
-  papers: QuestionPaper[];
-};
-
-// 학생 화면: 이름을 입력하면 기존 문제풀이(QuizApp)로 들어갑니다.
-// 이름은 이 화면 안에만 있고, 새로고침하면 다시 입력합니다.
-export default function StudentApp({ papers }: Props) {
+// 학생 화면: 이름을 입력하면 공개된 문제지로 문제풀이(QuizApp)를 합니다.
+// 이름은 제출할 때 결과와 함께 저장되고, 새로고침하면 다시 입력합니다.
+// 학생 화면에는 교사 화면이나 결과표로 가는 버튼이 없습니다.
+export default function StudentApp() {
   const [name, setName] = useState<string | null>(null);
 
   if (name === null) {
@@ -27,7 +23,7 @@ export default function StudentApp({ papers }: Props) {
           첫 화면으로
         </Link>
       </div>
-      <QuizApp papers={papers} />
+      <QuizApp studentName={name} />
     </div>
   );
 }
