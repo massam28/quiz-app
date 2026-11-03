@@ -4,6 +4,7 @@ import { useRef, useState, type ChangeEvent } from "react";
 import { parseQuizFile } from "@/lib/quiz/validate";
 import type { QuizFile } from "@/lib/quiz/types";
 import { teacherRequest } from "@/lib/api/client";
+import QuizPreview from "./QuizPreview";
 
 type Props = {
   onSaved: () => void;
@@ -122,36 +123,7 @@ export default function PaperUploadPanel({ onSaved }: Props) {
 
       {state.status === "preview" && (
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1 rounded-xl bg-slate-50 p-4">
-            <p className="text-sm text-slate-500">{state.fileName}</p>
-            <p className="text-xl font-bold">{state.quiz.title}</p>
-            <p className="text-slate-700">총 {state.quiz.questions.length}문항 · 아래 내용을 확인한 뒤 저장해 주세요.</p>
-          </div>
-
-          <ol className="flex max-h-96 flex-col gap-3 overflow-y-auto pr-1">
-            {state.quiz.questions.map((q, i) => (
-              <li key={i} className="flex flex-col gap-2 rounded-xl border border-slate-200 p-3">
-                <p className="font-semibold leading-relaxed">
-                  {i + 1}. {q.question}
-                </p>
-                <ol className="flex flex-col gap-1 text-slate-700">
-                  {q.options.map((option, j) => (
-                    <li
-                      key={j}
-                      className={j + 1 === q.correctAnswer ? "font-semibold text-green-800" : undefined}
-                    >
-                      {j + 1}. {option}
-                      {j + 1 === q.correctAnswer && " (정답)"}
-                    </li>
-                  ))}
-                </ol>
-                <p className="rounded-lg bg-slate-50 p-2 text-sm leading-relaxed text-slate-700">
-                  <span className="font-semibold">해설 </span>
-                  {q.explanation}
-                </p>
-              </li>
-            ))}
-          </ol>
+          <QuizPreview quiz={state.quiz} caption={state.fileName} note="아래 내용을 확인한 뒤 저장해 주세요." />
 
           {state.error && (
             <p role="alert" className="rounded-xl border border-red-300 bg-red-50 p-4 leading-relaxed text-red-900">

@@ -8,6 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 기술 구성: Next.js + TypeScript, Firebase(Auth·Firestore, 프로젝트 `quiz-app-2qy8u`), Vercel 배포, PC·휴대폰 겸용 화면
 - 이용 흐름(현재 버전, 2026-11-03): 첫 화면(`/`)에서 [교사로 시작하기]·[학생으로 시작하기] 선택
   - 교사(`/teacher`): Firebase Google 로그인(허용 계정 1개) → JSON 문제지 올리기·확인·저장(비공개) → 공개/비공개 → 문제지별 결과표·평균
+  - 교사 AI 출제: PDF 업로드 → Azure AI 생성(서버) → 제목·10문항·정답·해설 확인 → [저장](바로 공개) / [취소]
   - 학생(`/student`): 이름 입력 → **공개된** 문제지 목록 → 문항 확인 → 한 문제씩 풀이 → 제출(서버 채점·Firestore 저장) → 점수·문항별 정오·해설
 - 학생에게 파일 업로드를 요구하지 않습니다. 파일을 올리는 것은 로그인한 교사뿐입니다. `question-papers` 폴더는 이제 교사가 올릴 예시 파일 보관용이며 앱이 직접 읽지 않습니다.
 
@@ -40,7 +41,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 서버 창구
   - 학생: `GET /api/papers`(공개 목록), `GET /api/papers/[id]`(문제·보기만, 정답·해설 없음), `POST /api/papers/[id]/submit`(서버 채점·저장 후 결과 반환)
   - 교사(모두 `requireTeacher`로 토큰·허용 계정 확인): `GET/POST /api/teacher/papers`, `PATCH /api/teacher/papers/[id]`(공개 여부), `GET /api/teacher/papers/[id]/results`, `GET /api/teacher/me`
+  - AI 출제(교사, `requireTeacher`): `POST /api/teacher/ai/generate`(PDF 1개를 FormData로 받아 검사·추출 → Azure 호출 → 검증한 문제지 반환, 저장 안 함, `maxDuration` 120), `POST /api/teacher/ai/save`(다시 검증 후 `createPaper(..., { published: true, source: "ai" })`)
   - 공통 응답·오류 문구: `src/lib/api/respond.ts`. 서버 비밀키가 없으면 503으로 안내합니다.
+- `src/lib/ai/`: AI 출제
+  - `limits.ts`: 교육용 입력 기준(PDF 524,288바이트, 본문 12,000자, 최소 100자, 10문항), 파일·본문 검사, AI 결과 검사(`validateGeneratedQuiz` = `parseQuizFile` + 10문항 + 제목 중복). 화면·서버 공용. 점검 `limits.test.ts`
+  - `pdfText.ts`(서버 전용): `unpdf`로 본문 추출. 암호(PasswordException)·손상(InvalidPDFException) 구분. 본문을 자르지 않음
+  - `azureQuiz.ts`: Azure OpenAI v1 `POST {AZURE_ENDPOINT}/openai/v1/chat/completions`, `api-key` 머리글, `model`=배포명, `response_format` json_schema, 90초 제한, 401/403/429/시간 초과/형식 오류 구분, 자동 재시도 없음. 지시문은 PDF를 `<자료>`로 감싸고 그 안의 명령을 따르지 않게 함. 점검 `azureQuiz.test.ts`(가짜 응답, 실제 호출 없음)
+  - GPT-5 계열이라 `temperature`·`max_tokens`는 보내지 않습니다. `responses` 창구가 아니라 `chat/completions`를 씁니다(강사 안내에 창구 명시가 없어 선택, 2026-11-03 실제 호출 성공).
+- 앱 import 규칙: `src/lib/**` 안에서는 상대 경로(`../quiz/validate`)를 씁니다. 점검 도구(Vitest)가 `@/` 경로를 모릅니다.
 - `src/lib/quiz/`: 화면과 상관없는 규칙
   - `validate.ts`: 문제지 검사(교사 화면과 서버가 함께 씀). 제목과 문항별 한국어 오류 목록
   - `score.ts`: 채점. 소수 첫째 자리 반올림은 정수 계산으로 처리합니다.
@@ -56,9 +64,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 설정값은 `C:\dev\quiz-app\.env.local`(Git에 안 올라감)
   - `NEXT_PUBLIC_FIREBASE_API_KEY`·`_AUTH_DOMAIN`·`_PROJECT_ID`·`_APP_ID`: 공개 값. `firebase apps:sdkconfig WEB 1:791239491499:web:81b683aca6ba0968b15cee --project quiz-app-2qy8u`로 다시 받기
   - `TEACHER_EMAIL`: 서버 전용
+  - `AZURE_API_STYLE`(`openai-v1`), `AZURE_ENDPOINT`, `AZURE_DEPLOYMENT`(`gpt-5.6-luna`), `AZURE_API_KEY`: 강사 제공 Azure 연결값(서버 전용). 키 값은 출력·문서·커밋에 절대 적지 않습니다. 2026-11-03 사용자가 채팅에 붙여 넣은 값을 넣었으므로, 연수 후 강사에게 키 교체 필요 여부 확인을 권했습니다.
   - `GOOGLE_APPLICATION_CREDENTIALS`: 서버용 비밀키 **파일 위치**(`C:/Users/마아람/.firebase-keys/quiz-app-2qy8u-admin.json`, 앱 폴더·Drive 바깥). 비밀키 내용은 절대 출력·커밋하지 않습니다.
   - Vercel에 배포할 때: 위 공개 값과 `TEACHER_EMAIL`을 Vercel 환경 변수에 넣고, 비밀키는 파일 위치 대신 `FIREBASE_SERVICE_ACCOUNT_JSON`(파일 내용)을 **사용자가 Vercel 설정 화면에 직접** 넣습니다.
-- `src/components/TeacherDashboard.tsx`: 등록한 문제지 목록·공개 전환. `PaperUploadPanel`(파일 올리기·미리보기·저장), `ResultsPanel`(결과표·평균)
+- `src/components/TeacherDashboard.tsx`: 등록한 문제지 목록·공개 전환. `AiGeneratePanel`(PDF → AI 생성 → [저장]/[취소], 생성 중 잠금, 실패 시 [다시 시도]), `PaperUploadPanel`(JSON 올리기·미리보기·저장), `QuizPreview`(두 패널 공용 미리보기), `ResultsPanel`(결과표·평균)
 - `src/app/student/page.tsx` → `src/components/StudentApp.tsx`: 이름 입력(`StudentNameStep`) 후 "○○○ 학생" 표시와 함께 `QuizApp`. 학생 화면에는 교사 화면·결과표로 가는 버튼을 두지 않습니다.
 - `src/components/QuizApp.tsx`: 학생 화면 단계(list → review → solving → result) 상태 보관. 목록·문제는 서버에서 받고, 제출하면 서버가 채점·저장한 결과를 받습니다. 저장 실패 시 [다시 제출]. localStorage는 쓰지 않습니다.
 - `PaperListStep` / `ReviewStep` / `QuestionStep` / `ResultStep`: 학생 단계별 화면
@@ -67,7 +76,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **1일차**: `question-papers` 문제지 목록·선택, 문항 표시, 4지선다 풀이, 제출 후 채점·점수·정오·해설, 로컬 실행, Vercel 배포
 - **2일차**: 교사 Google 로그인·학생 게스트 입장, Azure AI 문제 생성, 문제 저장·공개, Firestore 결과 저장, 교사용 성적 조회
-- 2일차 진행(2026-11-03): 교사·학생 선택, 교사 Google 로그인, 교사 JSON 문제지 등록·공개·비공개, 학생 결과 Firestore 저장, 교사 결과표·평균까지 완료하고 내 컴퓨터에서 확인했습니다. Azure AI는 아직 연결하지 않았습니다(배포 안 함).
+- 2일차 진행(2026-11-03): 교사·학생 선택, 교사 Google 로그인, 교사 JSON 문제지 등록·공개·비공개, 학생 결과 Firestore 저장, 교사 결과표·평균, PDF Azure AI 출제까지 완료하고 내 컴퓨터에서 확인했습니다(배포 안 함). 문제지 삭제·재응시 제한은 없음(사용자 기본안 유지).
 - 1일차에는 로그인·AI·DB를 **구현하지 않습니다.** 나중에 확장하기 쉬운 구조로 만들되, 2일차 기능을 미리 만들지 않습니다.
 
 ## 반드시 지킬 앱 규칙 (PRD.md 결정 사항 요약)
@@ -151,6 +160,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 2026-11-03 Firestore `(default)`를 서울(`asia-northeast3`), standard, 삭제 방지 켜고 CLI로 만들고 `firestore.rules`(전부 차단)를 적용했습니다. 외부에서 REST로 읽으면 403 PERMISSION_DENIED인 것을 확인했습니다.
   - 2026-11-03 사용자 요청으로 서비스 계정 `firebase-adminsdk-fbsvc@quiz-app-2qy8u.iam.gserviceaccount.com`의 키(키 ID `720c82ca…`)를 IAM API로 만들어 `C:\Users\마아람\.firebase-keys\quiz-app-2qy8u-admin.json`에만 저장했습니다(내용 미출력). 이때 프로젝트의 IAM API(`iam.googleapis.com`)를 켰습니다.
   - 2026-11-03 확인용으로 예시 `sample-questions.json`("중학교 정보과목")을 등록했고(현재 비공개), 시험용 학생 결과 2건(김민수 100점, 이영희 70점)이 Firestore에 있습니다.
+  - 2026-11-03 AI 출제 실제 확인: 사용자가 고른 `표준학습자료_정보보호와데이터활용-5.pdf`로 Azure 호출 1회 성공(8.6초) → "안전한 계정 관리와 데이터 활용 점검 문제" 저장·공개 → 학생 "박지원" 80점 제출 → 시험 후 비공개로 돌림. 사용자가 직접 등록한 "고등학교 정보과목 cpy"(공개 중)도 있습니다.
+  - 암호가 걸린 실제 PDF, 서버 쪽 512KiB 초과 거부(화면에서 먼저 막힘), 배포 주소 동작은 아직 미확인입니다(PRD.md "배포 주소에서 따로 시험할 항목").
   - CLI로 만든 프로젝트는 로그인 허용 도메인에 `localhost`가 **빠져 있어** 로그인 시 "unauthorized-domain"이 났습니다. Identity Toolkit 관리 API(`admin/v2/projects/quiz-app-2qy8u/config`, `authorizedDomains`)로 추가했습니다. Vercel 주소를 추가할 때도 같은 방법이나 Firebase 화면(Authentication → 설정 → 승인된 도메인)을 씁니다.
   - 2026-11-03 사용자가 arerama1211@gmail.com으로 교사 로그인 성공, 새로고침 후 유지, 로그아웃을 확인했습니다. 다른 계정 차단은 실제 다른 계정으로는 아직 확인하지 않았습니다(서버 규칙 점검으로만 확인).
 - `claude` 명령은 PATH에 없고, Claude 앱에 들어 있는 `C:\Users\마아람\AppData\Local\Claude-Data\claude_pzs8sxrjxfjjc\claude-code\2.1.309\9078b9c1d466\claude.exe`를 썼습니다(앱 업데이트 시 경로가 바뀔 수 있음).

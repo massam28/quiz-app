@@ -28,6 +28,7 @@ type PaperDoc = {
   questions: Question[];
   questionCount: number;
   published: boolean;
+  source?: "json" | "ai";
   createdBy: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -89,8 +90,13 @@ export type CreatePaperResult =
   | { ok: true; id: string }
   | { ok: false; reason: "duplicate-title" | "duplicate-content"; existingTitle: string };
 
-// 같은 제목이나 완전히 같은 문항의 문제지가 있으면 저장하지 않습니다. 새 문제지는 비공개로 저장합니다.
-export async function createPaper(quiz: QuizFile, teacherEmail: string): Promise<CreatePaperResult> {
+// 같은 제목이나 완전히 같은 문항의 문제지가 있으면 저장하지 않습니다(덮어쓰거나 제목을 바꾸지 않음).
+// JSON 업로드는 비공개로, AI 생성 문제지는 저장과 동시에 공개합니다.
+export async function createPaper(
+  quiz: QuizFile,
+  teacherEmail: string,
+  options: { published?: boolean; source?: "json" | "ai" } = {},
+): Promise<CreatePaperResult> {
   const db = adminDb();
   const papers = db.collection(PAPERS);
   const key = titleKey(quiz.title);
@@ -113,7 +119,8 @@ export async function createPaper(quiz: QuizFile, teacherEmail: string): Promise
       contentHash,
       questions: quiz.questions,
       questionCount: quiz.questions.length,
-      published: false,
+      published: options.published ?? false,
+      source: options.source ?? "json",
       createdBy: teacherEmail,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),

@@ -33,18 +33,21 @@ export function postJson<T>(path: string, data: unknown, method = "POST"): Promi
 }
 
 // 교사 전용 창구: 로그인 토큰을 붙여 보냅니다. 서버가 다시 허용 계정인지 확인합니다.
+// 파일을 보낼 때는 form(FormData)을 씁니다.
 export async function teacherRequest<T>(
   path: string,
-  init: { method?: string; data?: unknown } = {},
+  init: { method?: string; data?: unknown; form?: FormData } = {},
 ): Promise<ApiResult<T>> {
   const user = getFirebaseAuth().currentUser;
   if (!user) return { ok: false, error: "교사 로그인이 필요합니다." };
   const idToken = await user.getIdToken();
   const headers: Record<string, string> = { Authorization: `Bearer ${idToken}` };
-  if (init.data !== undefined) headers["Content-Type"] = "application/json";
-  return requestJson<T>(path, {
-    method: init.method ?? "GET",
-    headers,
-    body: init.data !== undefined ? JSON.stringify(init.data) : undefined,
-  });
+  let body: BodyInit | undefined;
+  if (init.form) {
+    body = init.form;
+  } else if (init.data !== undefined) {
+    headers["Content-Type"] = "application/json";
+    body = JSON.stringify(init.data);
+  }
+  return requestJson<T>(path, { method: init.method ?? "GET", headers, body });
 }

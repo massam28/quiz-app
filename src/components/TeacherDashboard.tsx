@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { TeacherPaperSummary } from "@/lib/quiz/store";
 import { teacherRequest } from "@/lib/api/client";
+import AiGeneratePanel from "./AiGeneratePanel";
 import PaperUploadPanel from "./PaperUploadPanel";
 import ResultsPanel from "./ResultsPanel";
 
@@ -44,6 +45,8 @@ export default function TeacherDashboard() {
 
   return (
     <>
+      <AiGeneratePanel onSaved={loadPapers} />
+
       <PaperUploadPanel onSaved={loadPapers} />
 
       <div className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5">
