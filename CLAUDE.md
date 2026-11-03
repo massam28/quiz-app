@@ -97,16 +97,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 현재 상태 메모 (2026-11-02 확인)
 
-- 1일차 앱 제작과 내 컴퓨터에서 확인까지 마쳤습니다. 배포는 아직 하지 않았습니다.
+- 1일차 앱 제작과 내 컴퓨터에서 확인까지 마쳤습니다. 2026-11-03에 Vercel에 배포했습니다(아래 Vercel 항목).
 - 문제지 목록 방식(현재 버전)으로 바꾸고 내 컴퓨터에서 확인했습니다.
 - `question-papers`의 문제지: `high-school-questions.json`("고등학교 정보과목", 10문항), `sample-questions.json`("중학교 정보과목", 10문항). 두 문제지가 목록에 함께 표시되고 각각 끝까지 풀리는 것을 확인했습니다.
 - `high-school-questions.json`은 앱 폴더에만 있고 Google Drive 폴더에는 복사하지 않았습니다.
 - 설치됨: Node.js v24.18.0, npm 11.16.0, Git 2.55.0
-- 설치 안 됨: GitHub CLI(`gh`), Vercel CLI(`vercel`)
+- 설치됨(2026-11-03): Vercel CLI 65.10.0 (`npm i -g vercel`, 이 Windows 사용자 전용 `C:\Users\마아람\AppData\Roaming\npm`)
+- 설치 안 됨: GitHub CLI(`gh`)
 - Git 표시 이름·이메일: `massam28` / `arerama1211@gmail.com` (컴퓨터 전체 설정)
 - `C:\dev\quiz-app`은 Git 저장소(`main` 브랜치)입니다. 첫 커밋 `1083233`에 1일차 앱을 기록했습니다.
 - GitHub 저장소: https://github.com/massam28/quiz-app (공개, 원격 이름 `origin`, `main` 연결). 2026-11-02에 처음 올렸습니다.
   - GitHub 로그인은 Windows에 저장된 massam28 로그인(Git Credential Manager)을 씁니다. GitHub CLI(`gh`)는 설치하지 않았습니다.
   - 공개 저장소라 문제지 정답, 이 파일의 이메일·폴더 경로, 커밋 작성자 이메일이 누구에게나 보입니다.
   - GitHub에 올리기(push)는 사용자가 요청할 때만 합니다.
-- Vercel: 가입 여부 미확인, 연결 안 함. 배포는 사용자가 따로 요청할 때만 합니다.
+- Vercel (2026-11-03 확인): `vercel whoami` → `arerama1211-4956`, 팀 `twogaSSam`(hobby). 배포는 사용자가 따로 요청할 때만 합니다.
+  - 2026-11-03 첫 배포: 프로젝트 `twoga-ss-am/quiz-app`(사용자가 이름 결정), 앱 폴더에 `.vercel` 연결. `vercel deploy --prod --yes`로 정식 배포했습니다.
+  - 정식 주소: https://quiz-app-navy-two-13.vercel.app (로그인 없이 열림 확인). 배포별 주소(`quiz-8mqnjeqyb-...`)는 Vercel 보호 기능 때문에 로그인이 필요합니다.
+  - GitHub 자동 연결은 실패했습니다(연결 안 됨). 그래서 GitHub에 올려도 자동 배포되지 않고, 다시 배포하려면 `vercel deploy --prod`를 실행합니다.
+  - `vercel link`가 `.gitignore`에 `.vercel`, `.env*`를 추가했고 `.env.local`(Vercel 접속 토큰)을 만들었습니다. 이 변경은 아직 커밋하지 않았습니다.
+  - 사용자 범위로 공식 스킬 `vercel-cli`(`~\.claude\skills\vercel-cli`)를 설치하고, 공식 MCP `vercel`(`https://mcp.vercel.com`, `~\.claude.json`)을 등록했습니다. MCP는 `claude mcp list`에서 "Needs authentication"(계정 승인 전)입니다.
+  - 공식 플러그인 `vercel@anthropic-plugin-directory`(0.49.2)를 사용자 범위로 설치했습니다. bun이 없어 일부 추가 구성은 설치되지 않았습니다.
+  - `claude` 명령은 PATH에 없고, Claude 앱에 들어 있는 `C:\Users\마아람\AppData\Local\Claude-Data\claude_pzs8sxrjxfjjc\claude-code\2.1.309\9078b9c1d466\claude.exe`를 썼습니다(앱 업데이트 시 경로가 바뀔 수 있음).
