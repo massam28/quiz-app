@@ -1,5 +1,5 @@
 import "server-only";
-import { adminAuth } from "@/lib/firebase/admin";
+import { verifyFirebaseIdToken } from "./firebaseToken";
 import { isAllowedTeacher, readBearerToken, type TeacherCheck } from "./teacher";
 
 export const TEACHER_CHECK_STATUS = {
@@ -12,7 +12,8 @@ export const TEACHER_CHECK_STATUS = {
 // 교사 기능을 처리하는 서버 코드는 먼저 이 함수로 요청을 확인합니다.
 export async function verifyTeacherRequest(request: Request): Promise<TeacherCheck> {
   const allowedEmail = process.env.TEACHER_EMAIL;
-  if (!allowedEmail || !process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  if (!allowedEmail || !projectId) {
     return { ok: false, reason: "not-configured" };
   }
 
@@ -21,7 +22,7 @@ export async function verifyTeacherRequest(request: Request): Promise<TeacherChe
 
   let decoded;
   try {
-    decoded = await adminAuth().verifyIdToken(idToken);
+    decoded = await verifyFirebaseIdToken(idToken, projectId);
   } catch {
     return { ok: false, reason: "invalid-token" };
   }

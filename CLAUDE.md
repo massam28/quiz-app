@@ -57,9 +57,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `src/app/page.tsx`: 첫 화면(교사·학생 선택).
 - `src/app/teacher/page.tsx` → `src/components/TeacherApp.tsx`: 교사 로그인 화면. Google 팝업 로그인 후 `/api/teacher/me`에 토큰을 보내, 서버가 허용 계정이라고 답할 때만 `TeacherDashboard`를 보여줍니다. 허용되지 않으면 안내 후 자동 로그아웃합니다.
 - `src/app/api/teacher/me/route.ts`: 교사 확인 서버 창구(200 허용 / 401 로그인 안 됨·토큰 오류 / 403 다른 계정 / 500 설정 없음).
+- `src/lib/auth/firebaseToken.ts`: Firebase ID 토큰을 `jose`로 직접 확인(Google 공개키·RS256·발급자·대상·만료·auth_time). **`firebase-admin/auth`는 쓰지 않습니다**: 그 안의 `jwks-rsa` 4.x가 ESM 전용 `jose` 6을 `require`로 불러 Vercel 서버에서 `ERR_REQUIRE_ESM`으로 모든 서버 창구가 500이 났습니다(2026-11-03). 내 컴퓨터에서 재현: `npm run build` 후 `node --no-experimental-require-module node_modules/next/dist/bin/next start -p 3100`. 점검 `firebaseToken.test.ts`
 - `src/lib/auth/verifyTeacher.ts`(서버 전용): `verifyTeacherRequest`(토큰·허용 계정 확인)와 `requireTeacher`(교사가 아니면 돌려보낼 응답). **교사 기능의 서버 코드는 먼저 `requireTeacher(request)`로 확인합니다.**
 - `src/lib/auth/teacher.ts`: 허용 이메일 비교(대소문자·공백 무시, Google이 확인한 이메일만)와 토큰 읽기 규칙. 점검 파일 `teacher.test.ts`
-- `src/lib/firebase/client.ts`: 브라우저용 Firebase 연결(로그인만). `src/lib/firebase/admin.ts`(서버 전용): 서버용 연결(토큰 확인·Firestore)
+- `src/lib/firebase/client.ts`: 브라우저용 Firebase 연결(로그인만). `src/lib/firebase/admin.ts`(서버 전용): 서버용 연결(Firestore만)
 - `src/lib/api/client.ts`: 화면에서 서버 창구 부르기. `teacherRequest`는 로그인 토큰을 붙입니다.
 - 설정값은 `C:\dev\quiz-app\.env.local`(Git에 안 올라감)
   - `NEXT_PUBLIC_FIREBASE_API_KEY`·`_AUTH_DOMAIN`·`_PROJECT_ID`·`_APP_ID`: 공개 값. `firebase apps:sdkconfig WEB 1:791239491499:web:81b683aca6ba0968b15cee --project quiz-app-2qy8u`로 다시 받기

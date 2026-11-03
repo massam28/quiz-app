@@ -1,6 +1,5 @@
 import "server-only";
 import { applicationDefault, cert, getApps, initializeApp } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 
 // 서버용 Firebase 연결. 비밀키는 코드에 넣지 않고 아래 둘 중 하나로 받습니다.
@@ -22,11 +21,7 @@ export function hasServerCredentials(): boolean {
   );
 }
 
-// 로그인 토큰 확인은 비밀키 없이도 됩니다(프로젝트 ID만 필요).
-export function adminAuth() {
-  return getAuth(adminApp());
-}
-
+// 로그인 토큰 확인은 여기서 하지 않습니다(src/lib/auth/firebaseToken.ts).
 export function adminDb() {
   return getFirestore(adminApp());
 }
